@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
-// 댓글 작성 응답 데이터 구조 정의
+
 @Schema(description = "댓글 작성 응답 DTO (댓글 생성 시 반환되는 데이터 구조)")
 public class CommentResponse {
     @Schema(description = "댓글 ID", example = "101")

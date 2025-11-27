@@ -2,75 +2,104 @@ package com.example.restapi_demo.auth.controller;
 
 import com.example.restapi_demo.common.api.ApiResponse;
 import com.example.restapi_demo.auth.dto.LoginRequest;
+import com.example.restapi_demo.auth.jwt.TokenProvider;
 import com.example.restapi_demo.user.model.User;
-import com.example.restapi_demo.user.service.UserService; // ← 인터페이스에 의존
+import com.example.restapi_demo.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
+import org.springframework.security.authentication.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
-
+    private final AuthenticationManager authenticationManager;
     private final UserService userService;
+    private final TokenProvider tokenProvider;
 
-
-    public AuthController(UserService userService) {
-        this.userService = userService;
-    }
-
-    @Operation(summary = "로그인", description = "이메일과 비밀번호로 로그인합니다. 성공 시 user_id 반환")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "로그인 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류")
-    })
-    @PostMapping("/login")
+    @Operation(summary = "로그인", description = "JWT 토큰 발급")
+    @PostMapping(value = "/login")
     public ResponseEntity<ApiResponse<Object>> login(@RequestBody LoginRequest req) {
         try {
             if (req == null || req.getEmail() == null || req.getEmail().isBlank()
                     || req.getPassword() == null || req.getPassword().isBlank()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                return ResponseEntity.badRequest()
                         .body(new ApiResponse<>("invalid_request", null));
             }
 
-            User user = userService.authenticate(req.getEmail(), req.getPassword());
+            System.out.println("\n========== 로그인 시도 ==========");
+            System.out.println("이메일: " + req.getEmail());
+            System.out.println("비밀번호 길이: " + req.getPassword().length());
+            System.out.println("================================\n");
+
+            // 인증
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(req.getEmail(), req.getPassword())
+            );
+
+            // 권한 정보 추출
+            String authorities = authentication.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .collect(Collectors.joining(","));
+
+            System.out.println("\n========== 로그인 성공 ==========");
+            System.out.println("인증된 사용자: " + authentication.getName());
+            System.out.println("권한: " + authorities);
+
+            // JWT 토큰 생성
+            String token = tokenProvider.createToken(req.getEmail(), authorities);
+            System.out.println("JWT 토큰 생성됨: " + token.substring(0, 20) + "...");
+            System.out.println("================================\n");
+
+            // 사용자 정보 조회
+            User user = userService.findByEmail(req.getEmail());
             if (user == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(new ApiResponse<>("invalid_request", null));
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(new ApiResponse<>("internal_server_error", null));
             }
 
             return ResponseEntity.ok(
-                    new ApiResponse<>("loginSuccess", Map.of("user_id", user.getId()))
+                    new ApiResponse<>("loginSuccess", Map.of(
+                            "token", token,
+                            "user_id", user.getId(),
+                            "email", user.getEmail(),
+                            "nickname", user.getNickname()
+                    ))
             );
 
+        } catch (BadCredentialsException e) {
+            System.out.println("\n========== 로그인 실패 (BadCredentials) ==========");
+            System.out.println("이메일: " + req.getEmail());
+            System.out.println("원인: " + e.getMessage());
+            System.out.println("=================================================\n");
+
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse<>("invalid_credentials", null));
         } catch (Exception e) {
+            System.out.println("\n========== 로그인 예외 발생 ==========");
+            System.out.println("예외 타입: " + e.getClass().getName());
+            System.out.println("메시지: " + e.getMessage());
+            e.printStackTrace();
+            System.out.println("=====================================\n");
+
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>("internal_server_error", null));
         }
     }
 
-    @Operation(summary = "로그아웃", description = "헤더에 X-User-Id를 포함해야 로그아웃이 가능합니다.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "로그아웃 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 정보 누락"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류")
-    })
+    @Operation(summary = "로그아웃")
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(
-                                        @RequestHeader(value = "X-User-Id", required = false) String userId
-    ) {
-        try {
-            if (userId == null || userId.isBlank()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-            }
-            return ResponseEntity.noContent().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    public ResponseEntity<ApiResponse<Object>> logout() {
+        // JWT는 Stateless이므로 서버에서 할 일 없음
+        // 클라이언트에서 토큰 삭제하면 됨
+        return ResponseEntity.ok(new ApiResponse<>("logout_success", null));
     }
 }

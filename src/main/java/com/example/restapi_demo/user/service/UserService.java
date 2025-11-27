@@ -10,6 +10,8 @@ public interface UserService {
 
     User findById(Long id);
 
+    User findByEmail(String email);
+
     User updateProfile(Long id, String nickname, String profileImage);
 
     User authenticate(String email, String password);

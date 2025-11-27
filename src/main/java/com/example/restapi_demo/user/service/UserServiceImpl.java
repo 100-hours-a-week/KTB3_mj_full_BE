@@ -2,6 +2,7 @@ package com.example.restapi_demo.user.service;
 
 import com.example.restapi_demo.user.model.User;
 import com.example.restapi_demo.user.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder; // ★ 추가
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,9 +14,12 @@ import java.util.Optional;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserServiceImpl(UserRepository userRepository) {
+    public UserServiceImpl(UserRepository userRepository,
+                           PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     // 회원가입
@@ -28,9 +32,12 @@ public class UserServiceImpl implements UserService {
             return null;
         }
 
+
+        String encoded = passwordEncoder.encode(password);
+
         User toSave = User.builder()
                 .email(email)
-                .passwordHash(password)
+                .passwordHash(encoded)
                 .nickname(nickname)
                 .profileImageUrl(profileImageUrl)
                 .build();
@@ -44,6 +51,13 @@ public class UserServiceImpl implements UserService {
         return userRepository.findById(id).orElse(null);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public User findByEmail(String email) {
+        if (email == null || email.isBlank()) return null;
+        return userRepository.findByEmail(email).orElse(null);
+    }
+
 
     @Override
     public User updateProfile(Long id, String nickname, String profileImageUrl) {
@@ -51,13 +65,11 @@ public class UserServiceImpl implements UserService {
         return userRepository.updateProfile(id, nickname, profileImageUrl).orElse(null);
     }
 
-
     @Override
     public boolean deleteMe(Long id) {
         if (id == null) return false;
         return userRepository.deleteById(id);
     }
-
 
     @Override
     public ChangePasswordResult changePassword(Long id, String newPassword, String newPasswordConfirm) {
@@ -71,7 +83,9 @@ public class UserServiceImpl implements UserService {
             return new ChangePasswordResult(false, errors);
         }
 
-        Optional<User> updated = userRepository.updatePassword(id, newPassword); // 내부에서 passwordHash로 저장
+
+        String encoded = passwordEncoder.encode(newPassword);
+        Optional<User> updated = userRepository.updatePassword(id, encoded); // ★ 인코딩된 값 전달
         if (updated.isEmpty()) {
             errors.add(new String[]{"user", "not_found"});
             return new ChangePasswordResult(false, errors);
@@ -85,25 +99,21 @@ public class UserServiceImpl implements UserService {
 
 
         return userRepository.findByEmail(email)
-                .filter(u -> password.equals(u.getPasswordHash()))
+                .filter(u -> passwordEncoder.matches(password, u.getPasswordHash())) // ★ 수정
                 .orElse(null);
     }
-
 
     @Override
     @Transactional(readOnly = true)
     public List<User> findByNicknameKeyword(String keyword) {
-
         return userRepository.findByNicknameContainingIgnoreCaseOrderByIdDesc(keyword);
     }
-
 
     @Override
     @Transactional(readOnly = true)
     public boolean existsByEmail(String email) {
         return userRepository.existsByEmail(email);
     }
-
 
     @Override
     @Transactional(readOnly = true)

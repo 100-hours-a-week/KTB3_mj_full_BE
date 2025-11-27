@@ -2,6 +2,7 @@ package com.example.restapi_demo.post.repository;
 
 import com.example.restapi_demo.post.model.Comment;
 import com.example.restapi_demo.post.model.Post;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -18,9 +19,13 @@ public interface PostRepository {
 
 
     Optional<DetailSeed> findDetailById(Long postId);
+    Optional<Post> findById(Long id);
 
 
     boolean deleteById(Long postId);
+
+    List<Comment> findCommentsByPostId(Long postId);
+
 
 
     Optional<Integer> incrementLikes(Long postId);
@@ -42,6 +47,7 @@ public interface PostRepository {
         private String title;
         private String authorName;
         private String content;
+        @Setter
         private List<String> images;
         private int likesCount;       // <- 필드명 정리
         private int views;
@@ -89,7 +95,7 @@ public interface PostRepository {
 
         public void setTitle(String title) { this.title = title; }
         public void setContent(String content) { this.content = content; }
-        public void setImages(List<String> images) { this.images = images; }
+
         public void setLikesCount(int likesCount) { this.likesCount = likesCount; }
         public void setCommentsCount(int commentsCount) { this.commentsCount = commentsCount; }
         public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }

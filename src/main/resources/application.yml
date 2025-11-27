@@ -1,5 +1,4 @@
 spring:
-
   profiles:
     active: dev
 
@@ -9,11 +8,9 @@ spring:
     password: toby409@
     driver-class-name: com.mysql.cj.jdbc.Driver
 
-
-
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
@@ -21,7 +18,25 @@ spring:
         jdbc.time_zone: Asia/Seoul
     open-in-view: false
 
+  # ★★★ 세션 설정 완전 제거 ★★★
+  # servlet:
+  #   session:
+  #     cookie:
+  #       same-site: none
+  #       http-only: true
+  #       secure: false
+  #       path: /
 
+# ★★★ server 설정도 제거 ★★★
+# server:
+#   servlet:
+#     session:
+#       timeout: 1800
+
+# ★★★ 이 부분만 추가 ★★★
+jwt:
+  secret: your-very-secure-secret-key-that-should-be-at-least-256-bits-long-for-hs256-algorithm
+  expiration: 86400000  # 24시간 (밀리초)
 logging:
   level:
     org.hibernate.SQL: debug
