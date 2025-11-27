@@ -29,19 +29,52 @@ public class JwtFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
-        // 1. 헤더에서 JWT 토큰 추출
+        // ==========================
+        // 1. 필터 진입 로그
+        // ==========================
+        String uri = request.getRequestURI();
+        String method = request.getMethod();
+        String authHeader = request.getHeader(AUTHORIZATION_HEADER);
+
+        System.out.println("\n========== [JwtFilter] 요청 진입 ==========");
+        System.out.println("요청 URI    : " + uri);
+        System.out.println("HTTP 메서드 : " + method);
+        System.out.println("Auth 헤더   : " + authHeader);
+        System.out.println("=========================================");
+
+        // 2. 헤더에서 JWT 토큰 추출
         String jwt = resolveToken(request);
+        System.out.println("[JwtFilter] resolveToken 결과(jwt): " + jwt);
 
-        // 2. 토큰 유효성 검사
-        if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
-            // 3. 토큰이 유효하면 Authentication 객체를 가져와서 SecurityContext에 저장
-            Authentication authentication = tokenProvider.getAuthentication(jwt);
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+        try {
+            // 3. 토큰 유효성 검사
+            if (StringUtils.hasText(jwt)) {
+                System.out.println("[JwtFilter] 토큰 문자열 존재 → 유효성 검사 시작");
 
-            System.out.println("✅ JWT 인증 성공: " + authentication.getName());
+                boolean valid = tokenProvider.validateToken(jwt);
+                System.out.println("[JwtFilter] tokenProvider.validateToken(jwt) = " + valid);
+
+                if (valid) {
+                    // 4. 토큰이 유효하면 Authentication 객체를 가져와서 SecurityContext에 저장
+                    Authentication authentication = tokenProvider.getAuthentication(jwt);
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                    System.out.println("✅ JWT 인증 성공: " + authentication.getName());
+                } else {
+                    System.out.println("❌ JWT 토큰이 유효하지 않음 (validateToken=false)");
+                }
+            } else {
+                System.out.println("[JwtFilter] JWT 토큰이 비어있음(Authorization 헤더 없음 또는 형식 불일치)");
+            }
+        } catch (Exception e) {
+            System.out.println("❗ [JwtFilter] 토큰 처리 중 예외 발생: " + e.getClass().getName());
+            System.out.println("메시지: " + e.getMessage());
+            e.printStackTrace();
+            // 예외가 발생하더라도 필터 체인은 계속 흘려보냄
         }
 
-        // 4. 다음 필터로 진행
+        // 5. 다음 필터로 진행
+        System.out.println("[JwtFilter] 다음 필터로 체인 진행\n");
         filterChain.doFilter(request, response);
     }
 
@@ -49,7 +82,7 @@ public class JwtFilter extends OncePerRequestFilter {
     private String resolveToken(HttpServletRequest request) {
         String bearerToken = request.getHeader(AUTHORIZATION_HEADER);
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(BEARER_PREFIX)) {
-            return bearerToken.substring(7);
+            return bearerToken.substring(BEARER_PREFIX.length());
         }
         return null;
     }
