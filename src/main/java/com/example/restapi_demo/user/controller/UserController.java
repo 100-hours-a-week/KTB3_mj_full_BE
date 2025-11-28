@@ -11,9 +11,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -100,50 +97,13 @@ public class UserController {
     })
     @GetMapping("/me")
     @Transactional(readOnly = true)
-    public ResponseEntity<ApiResponse<Object>> me(HttpServletRequest httpRequest) {
+    public ResponseEntity<ApiResponse<Object>> me() {
         try {
-            System.out.println("\n========== GET /api/users/me 호출 ==========");
-
-            // 1. 세션 확인
-            HttpSession session = httpRequest.getSession(false);
-            System.out.println("[세션 정보]");
-            System.out.println("세션 존재: " + (session != null));
-            if (session != null) {
-                System.out.println("세션 ID: " + session.getId());
-                Object secContext = session.getAttribute("SPRING_SECURITY_CONTEXT");
-                System.out.println("세션의 SecurityContext: " + secContext);
-            }
-
-            // 2. SecurityContextHolder 확인
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            System.out.println("\n[Authentication 정보]");
-            System.out.println("auth 객체: " + auth);
-            if (auth != null) {
-                System.out.println("isAuthenticated: " + auth.isAuthenticated());
-                System.out.println("Principal: " + auth.getPrincipal());
-            }
-
-            // 3. 쿠키 확인
-            Cookie[] cookies = httpRequest.getCookies();
-            System.out.println("\n[Cookie 정보]");
-            if (cookies != null) {
-                for (Cookie cookie : cookies) {
-                    System.out.println("Cookie: " + cookie.getName() + " = " + cookie.getValue());
-                }
-            } else {
-                System.out.println("⚠️ 쿠키 없음!");
-            }
-
-            System.out.println("==========================================\n");
-
             User u = currentUserOrNull();
             if (u == null) {
-                System.out.println("❌ currentUserOrNull() 반환 null - 401 반환");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(new ApiResponse<>("auth_required", null));
             }
-
-            System.out.println("✅ 인증 성공 - 사용자: " + u.getEmail());
 
             Map<String, Object> data = new HashMap<>();
             data.put("id", u.getId());
@@ -177,21 +137,14 @@ public class UserController {
                     required = true,
                     content = @Content(schema = @Schema(implementation = UpdateUserRequest.class))
             )
-            @RequestBody UpdateUserRequest req,
-            HttpServletRequest httpRequest
+            @RequestBody UpdateUserRequest req
     ) {
         try {
-            System.out.println("\n========== PATCH /api/users/me 호출 ==========");
-            System.out.println("요청 바디 - nickname: " + req.getNickname() + ", profile_image: " + req.getProfile_image());
-
             User exist = currentUserOrNull();
             if (exist == null) {
-                System.out.println("❌ currentUserOrNull() 반환 null - 401 반환");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(new ApiResponse<>("auth_required", null));
             }
-
-            System.out.println("✅ 인증 성공 - 사용자: " + exist.getEmail());
 
             List<FieldErrorDTO> errors = new ArrayList<>();
             String nickname = req.getNickname();
@@ -219,7 +172,6 @@ public class UserController {
             data.put("profile_image", updated.getProfileImageUrl());
             data.put("updated_at", LocalDateTime.now());
 
-            System.out.println("✅ 회원정보 수정 완료");
             return ResponseEntity.ok(new ApiResponse<>("update_success", data));
         } catch (Exception e) {
             e.printStackTrace();
@@ -236,11 +188,10 @@ public class UserController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "internal_server_error")
     })
     @DeleteMapping("/me")
-    public ResponseEntity<ApiResponse<Object>> deleteMe(HttpServletRequest httpRequest) {
+    public ResponseEntity<ApiResponse<Object>> deleteMe() {
         try {
             User exist = currentUserOrNull();
             if (exist == null) {
-                System.out.println("❌ currentUserOrNull() 반환 null - 401 반환");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(new ApiResponse<>("auth_required", null));
             }
@@ -280,13 +231,11 @@ public class UserController {
                     required = true,
                     content = @Content(schema = @Schema(implementation = PasswordChangeRequest.class))
             )
-            @RequestBody PasswordChangeRequest req,
-            HttpServletRequest httpRequest
+            @RequestBody PasswordChangeRequest req
     ) {
         try {
             User exist = currentUserOrNull();
             if (exist == null) {
-                System.out.println("❌ currentUserOrNull() 반환 null - 401 반환");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(new ApiResponse<>("auth_required", null));
             }
