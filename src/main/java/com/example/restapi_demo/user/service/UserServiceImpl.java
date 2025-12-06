@@ -85,7 +85,7 @@ public class UserServiceImpl implements UserService {
 
 
         String encoded = passwordEncoder.encode(newPassword);
-        Optional<User> updated = userRepository.updatePassword(id, encoded); // ★ 인코딩된 값 전달
+        Optional<User> updated = userRepository.updatePassword(id, encoded);
         if (updated.isEmpty()) {
             errors.add(new String[]{"user", "not_found"});
             return new ChangePasswordResult(false, errors);

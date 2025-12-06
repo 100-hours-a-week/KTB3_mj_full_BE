@@ -1,0 +1,467 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > PostController</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.example.restapi_demo.post.controller</a>
+</div>
+
+<h1>Coverage Summary for Class: PostController (com.example.restapi_demo.post.controller)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">PostController</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/21)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/96)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/128)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.example.restapi_demo.post.controller;
+&nbsp;
+&nbsp;import com.example.restapi_demo.common.api.ApiResponse;
+&nbsp;import com.example.restapi_demo.post.dto.*;
+&nbsp;import com.example.restapi_demo.post.model.Post;
+&nbsp;import com.example.restapi_demo.post.service.PostService;
+&nbsp;import com.example.restapi_demo.user.model.User;
+&nbsp;import com.example.restapi_demo.user.service.UserService;
+&nbsp;import io.swagger.v3.oas.annotations.Operation;
+&nbsp;import io.swagger.v3.oas.annotations.media.Content;
+&nbsp;import io.swagger.v3.oas.annotations.media.Schema;
+&nbsp;import org.springframework.http.HttpStatus;
+&nbsp;import org.springframework.http.ResponseEntity;
+&nbsp;import org.springframework.security.core.Authentication;
+&nbsp;import org.springframework.security.core.context.SecurityContextHolder;
+&nbsp;import org.springframework.security.core.userdetails.UserDetails;
+&nbsp;import org.springframework.web.bind.annotation.*;
+&nbsp;
+&nbsp;import java.util.List;
+&nbsp;import java.util.Map;
+&nbsp;
+&nbsp;@RestController
+&nbsp;@RequestMapping(&quot;/api/posts&quot;)
+&nbsp;public class PostController {
+&nbsp;
+&nbsp;    private final PostService postService;
+&nbsp;    private final UserService userService;
+&nbsp;
+<b class="nc">&nbsp;    public PostController(PostService postService, UserService userService) {</b>
+<b class="nc">&nbsp;        this.postService = postService;</b>
+<b class="nc">&nbsp;        this.userService = userService;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private ResponseEntity&lt;ApiResponse&lt;Object&gt;&gt; badRequest(String code) {
+<b class="nc">&nbsp;        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse&lt;&gt;(code, null));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private ResponseEntity&lt;ApiResponse&lt;Object&gt;&gt; unauthorized() {
+<b class="nc">&nbsp;        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse&lt;&gt;(&quot;auth_required&quot;, null));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private ResponseEntity&lt;ApiResponse&lt;Object&gt;&gt; internalError() {
+<b class="nc">&nbsp;        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse&lt;&gt;(&quot;internal_server_error&quot;, null));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String currentEmailOrNull() {
+<b class="nc">&nbsp;        Authentication auth = SecurityContextHolder.getContext().getAuthentication();</b>
+<b class="nc">&nbsp;        if (auth == null || !auth.isAuthenticated()) return null;</b>
+&nbsp;
+<b class="nc">&nbsp;        Object principal = auth.getPrincipal();</b>
+<b class="nc">&nbsp;        if (principal == null) return null;</b>
+<b class="nc">&nbsp;        if (&quot;anonymousUser&quot;.equals(principal)) return null;</b>
+&nbsp;
+<b class="nc">&nbsp;        if (principal instanceof UserDetails userDetails) {</b>
+<b class="nc">&nbsp;            return userDetails.getUsername();</b>
+&nbsp;        }
+<b class="nc">&nbsp;        return principal.toString();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private User currentUserOrNull() {
+<b class="nc">&nbsp;        String email = currentEmailOrNull();</b>
+<b class="nc">&nbsp;        if (email == null || email.isBlank()) return null;</b>
+<b class="nc">&nbsp;        return userService.findByEmail(email);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private Long currentUserIdOrNull() {
+<b class="nc">&nbsp;        User u = currentUserOrNull();</b>
+<b class="nc">&nbsp;        return (u == null ? null : u.getId());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;
+&nbsp;    @Operation(summary = &quot;게시글 목록 조회&quot;, description = &quot;전체 게시글 목록을 조회합니다.&quot;)
+&nbsp;    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+&nbsp;            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+&nbsp;                    responseCode = &quot;200&quot;, description = &quot;조회 성공&quot;,
+&nbsp;                    content = @Content(mediaType = &quot;application/json&quot;,
+&nbsp;                            schema = @Schema(implementation = PostListResponse.class))
+&nbsp;            ),
+&nbsp;            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = &quot;500&quot;, description = &quot;서버 오류&quot;)
+&nbsp;    })
+&nbsp;    @GetMapping
+&nbsp;    public ResponseEntity&lt;ApiResponse&lt;Object&gt;&gt; list() {
+&nbsp;        try {
+<b class="nc">&nbsp;            PostListResponse data = postService.getPosts();</b>
+<b class="nc">&nbsp;            return ResponseEntity.ok(new ApiResponse&lt;&gt;(&quot;read_success&quot;, data));</b>
+&nbsp;        } catch (Exception e) {
+<b class="nc">&nbsp;            return internalError();</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    @Operation(summary = &quot;게시글 상세 조회&quot;, description = &quot;게시글 ID를 기반으로 상세 내용을 조회합니다.&quot;)
+&nbsp;    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+&nbsp;            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+&nbsp;                    responseCode = &quot;200&quot;, description = &quot;조회 성공&quot;,
+&nbsp;                    content = @Content(mediaType = &quot;application/json&quot;,
+&nbsp;                            schema = @Schema(implementation = PostDetailResponse.class))
+&nbsp;            ),
+&nbsp;            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = &quot;404&quot;, description = &quot;게시글 없음&quot;),
+&nbsp;            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = &quot;500&quot;, description = &quot;서버 오류&quot;)
+&nbsp;    })
+&nbsp;    @GetMapping(&quot;/{postId}&quot;)
+&nbsp;    public ResponseEntity&lt;ApiResponse&lt;Object&gt;&gt; detail(@PathVariable Long postId) {
+&nbsp;        try {
+<b class="nc">&nbsp;            Long requesterId = currentUserIdOrNull(); // 비로그인이면 null</b>
+<b class="nc">&nbsp;            PostDetailResponse data = postService.getPostDetail(postId, requesterId);</b>
+<b class="nc">&nbsp;            if (data == null) {</b>
+<b class="nc">&nbsp;                return ResponseEntity.status(HttpStatus.NOT_FOUND)</b>
+<b class="nc">&nbsp;                        .body(new ApiResponse&lt;&gt;(&quot;post_not_found&quot;, null));</b>
+&nbsp;            }
+<b class="nc">&nbsp;            return ResponseEntity.ok(new ApiResponse&lt;&gt;(&quot;read_success&quot;, data));</b>
+&nbsp;        } catch (Exception e) {
+<b class="nc">&nbsp;            return internalError();</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    @Operation(summary = &quot;댓글 목록 조회&quot;, description = &quot;특정 게시글의 댓글 목록을 조회합니다.&quot;)
+&nbsp;    @GetMapping(&quot;/{postId}/comments&quot;)
+&nbsp;    public ResponseEntity&lt;ApiResponse&lt;Object&gt;&gt; getComments(@PathVariable Long postId) {
+&nbsp;        try {
+<b class="nc">&nbsp;            Long requesterId = currentUserIdOrNull(); // 비로그인이면 null</b>
+<b class="nc">&nbsp;            List&lt;CommentResponse&gt; comments = postService.getComments(postId, requesterId);</b>
+<b class="nc">&nbsp;            return ResponseEntity.ok(new ApiResponse&lt;&gt;(&quot;read_success&quot;, comments));</b>
+&nbsp;        } catch (Exception e) {
+<b class="nc">&nbsp;            return internalError();</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    @Operation(summary = &quot;제목 키워드 검색&quot;, description = &quot;제목에 keyword가 포함된 게시글을 조회합니다. 대소문자 무시.&quot;)
+&nbsp;    @GetMapping(&quot;/search/title&quot;)
+&nbsp;    public ResponseEntity&lt;ApiResponse&lt;Object&gt;&gt; searchByTitle(@RequestParam String keyword) {
+&nbsp;        try {
+<b class="nc">&nbsp;            var results = postService.searchByTitle(keyword);</b>
+<b class="nc">&nbsp;            return ResponseEntity.ok(new ApiResponse&lt;&gt;(&quot;read_success&quot;, results));</b>
+&nbsp;        } catch (Exception e) {
+<b class="nc">&nbsp;            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)</b>
+<b class="nc">&nbsp;                    .body(new ApiResponse&lt;&gt;(&quot;internal_server_error&quot;, null));</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    @Operation(summary = &quot;작성자 닉네임으로 검색&quot;, description = &quot;특정 닉네임 작성자의 게시글을 조회합니다.&quot;)
+&nbsp;    @GetMapping(&quot;/search/author&quot;)
+&nbsp;    public ResponseEntity&lt;ApiResponse&lt;Object&gt;&gt; searchByAuthor(@RequestParam String nickname) {
+&nbsp;        try {
+<b class="nc">&nbsp;            var results = postService.findByAuthorNickname(nickname);</b>
+<b class="nc">&nbsp;            return ResponseEntity.ok(new ApiResponse&lt;&gt;(&quot;read_success&quot;, results));</b>
+&nbsp;        } catch (Exception e) {
+<b class="nc">&nbsp;            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)</b>
+<b class="nc">&nbsp;                    .body(new ApiResponse&lt;&gt;(&quot;internal_server_error&quot;, null));</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;
+&nbsp;    @Operation(summary = &quot;게시글 생성&quot;, description = &quot;새로운 게시글을 작성합니다. 제목은 최대 26자.&quot;)
+&nbsp;    @PostMapping
+&nbsp;    public ResponseEntity&lt;ApiResponse&lt;Object&gt;&gt; createPost(@RequestBody Map&lt;String, String&gt; req) {
+&nbsp;        try {
+<b class="nc">&nbsp;            User me = currentUserOrNull();</b>
+<b class="nc">&nbsp;            if (me == null) return unauthorized();</b>
+&nbsp;
+<b class="nc">&nbsp;            if (req == null) return badRequest(&quot;invalid_request&quot;);</b>
+<b class="nc">&nbsp;            String title = req.get(&quot;title&quot;);</b>
+<b class="nc">&nbsp;            String content = req.get(&quot;content&quot;);</b>
+<b class="nc">&nbsp;            String image = req.get(&quot;image&quot;);</b>
+&nbsp;
+<b class="nc">&nbsp;            if (title == null || title.isBlank() || title.length() &gt; 26) return badRequest(&quot;invalid_request&quot;);</b>
+<b class="nc">&nbsp;            if (content == null || content.isBlank()) return badRequest(&quot;invalid_request&quot;);</b>
+&nbsp;
+<b class="nc">&nbsp;            String authorName = (me.getNickname() != null &amp;&amp; !me.getNickname().isBlank()) ? me.getNickname() : &quot;나&quot;;</b>
+&nbsp;
+<b class="nc">&nbsp;            Post newPost = postService.createPost(me.getId(), authorName, title, content, image);</b>
+<b class="nc">&nbsp;            if (newPost == null) return internalError();</b>
+&nbsp;
+<b class="nc">&nbsp;            PostCreateResponse data = new PostCreateResponse(</b>
+<b class="nc">&nbsp;                    newPost.getId(),</b>
+<b class="nc">&nbsp;                    newPost.getTitle(),</b>
+&nbsp;                    authorName,
+&nbsp;                    image,
+<b class="nc">&nbsp;                    newPost.getCreatedAt()</b>
+&nbsp;            );
+&nbsp;
+<b class="nc">&nbsp;            return ResponseEntity.status(HttpStatus.CREATED)</b>
+<b class="nc">&nbsp;                    .body(new ApiResponse&lt;&gt;(&quot;create_success&quot;, data));</b>
+&nbsp;        } catch (Exception e) {
+<b class="nc">&nbsp;            return internalError();</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    @Operation(summary = &quot;게시글 수정&quot;, description = &quot;제목/본문/이미지를 수정합니다.&quot;)
+&nbsp;    @PatchMapping(&quot;/{postId}&quot;)
+&nbsp;    public ResponseEntity&lt;ApiResponse&lt;Object&gt;&gt; updatePost(
+&nbsp;            @PathVariable Long postId,
+&nbsp;            @RequestBody PostUpdateRequest request
+&nbsp;    ) {
+&nbsp;        try {
+<b class="nc">&nbsp;            User me = currentUserOrNull();</b>
+<b class="nc">&nbsp;            if (me == null) return unauthorized();</b>
+&nbsp;
+<b class="nc">&nbsp;            if (request == null) return badRequest(&quot;invalid_request&quot;);</b>
+<b class="nc">&nbsp;            String title = request.getTitle();</b>
+<b class="nc">&nbsp;            String content = request.getContent();</b>
+<b class="nc">&nbsp;            String image = request.getImage();</b>
+&nbsp;
+<b class="nc">&nbsp;            if (title == null || title.isBlank() || title.length() &gt; 26) return badRequest(&quot;invalid_request&quot;);</b>
+<b class="nc">&nbsp;            if (content == null || content.isBlank()) return badRequest(&quot;invalid_request&quot;);</b>
+&nbsp;
+<b class="nc">&nbsp;            PostUpdateResponse data = postService.updatePost(postId, me.getId(), title, content, image);</b>
+<b class="nc">&nbsp;            if (data == null) {</b>
+<b class="nc">&nbsp;                return ResponseEntity.status(HttpStatus.NOT_FOUND)</b>
+<b class="nc">&nbsp;                        .body(new ApiResponse&lt;&gt;(&quot;post_not_found_or_forbidden&quot;, null));</b>
+&nbsp;            }
+<b class="nc">&nbsp;            return ResponseEntity.ok(new ApiResponse&lt;&gt;(&quot;update_success&quot;, data));</b>
+&nbsp;        } catch (Exception e) {
+<b class="nc">&nbsp;            return internalError();</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    @Operation(summary = &quot;게시글 삭제&quot;, description = &quot;게시글을 삭제합니다. 성공 시 204 반환.&quot;)
+&nbsp;    @DeleteMapping(&quot;/{postId}&quot;)
+&nbsp;    public ResponseEntity&lt;?&gt; delete(@PathVariable Long postId) {
+&nbsp;        try {
+<b class="nc">&nbsp;            User me = currentUserOrNull();</b>
+<b class="nc">&nbsp;            if (me == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();</b>
+&nbsp;
+<b class="nc">&nbsp;            boolean deleted = postService.deletePost(postId, me.getId());</b>
+<b class="nc">&nbsp;            if (!deleted) {</b>
+<b class="nc">&nbsp;                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();</b>
+&nbsp;            }
+<b class="nc">&nbsp;            return ResponseEntity.noContent().build();</b>
+&nbsp;        } catch (Exception e) {
+<b class="nc">&nbsp;            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    @Operation(summary = &quot;좋아요 추가&quot;, description = &quot;게시글에 좋아요를 추가합니다.&quot;)
+&nbsp;    @PostMapping(&quot;/{postId}/likes&quot;)
+&nbsp;    public ResponseEntity&lt;ApiResponse&lt;Object&gt;&gt; like(@PathVariable Long postId) {
+&nbsp;        try {
+<b class="nc">&nbsp;            User me = currentUserOrNull();</b>
+<b class="nc">&nbsp;            if (me == null) return unauthorized();</b>
+&nbsp;
+<b class="nc">&nbsp;            Integer newLikes = postService.addLike(postId, me.getId());</b>
+<b class="nc">&nbsp;            if (newLikes == null) {</b>
+<b class="nc">&nbsp;                return ResponseEntity.status(HttpStatus.NOT_FOUND)</b>
+<b class="nc">&nbsp;                        .body(new ApiResponse&lt;&gt;(&quot;post_not_found&quot;, null));</b>
+&nbsp;            }
+<b class="nc">&nbsp;            return ResponseEntity.ok(new ApiResponse&lt;&gt;(&quot;like_added&quot;, Map.of(&quot;likes&quot;, newLikes)));</b>
+&nbsp;        } catch (Exception e) {
+<b class="nc">&nbsp;            return internalError();</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    @Operation(summary = &quot;좋아요 취소&quot;, description = &quot;게시글의 좋아요를 취소합니다.&quot;)
+&nbsp;    @DeleteMapping(&quot;/{postId}/likes&quot;)
+&nbsp;    public ResponseEntity&lt;ApiResponse&lt;Object&gt;&gt; unlike(@PathVariable Long postId) {
+&nbsp;        try {
+<b class="nc">&nbsp;            User me = currentUserOrNull();</b>
+<b class="nc">&nbsp;            if (me == null) return unauthorized();</b>
+&nbsp;
+<b class="nc">&nbsp;            Integer newLikes = postService.removeLike(postId, me.getId());</b>
+<b class="nc">&nbsp;            if (newLikes == null) {</b>
+<b class="nc">&nbsp;                return ResponseEntity.status(HttpStatus.NOT_FOUND)</b>
+<b class="nc">&nbsp;                        .body(new ApiResponse&lt;&gt;(&quot;post_not_found&quot;, null));</b>
+&nbsp;            }
+<b class="nc">&nbsp;            return ResponseEntity.ok(new ApiResponse&lt;&gt;(&quot;like_removed&quot;, Map.of(&quot;likes&quot;, newLikes)));</b>
+&nbsp;        } catch (Exception e) {
+<b class="nc">&nbsp;            return internalError();</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    @Operation(summary = &quot;댓글 작성&quot;, description = &quot;게시글에 새로운 댓글을 작성합니다.&quot;)
+&nbsp;    @PostMapping(&quot;/{postId}/comments&quot;)
+&nbsp;    public ResponseEntity&lt;ApiResponse&lt;Object&gt;&gt; createComment(
+&nbsp;            @PathVariable Long postId,
+&nbsp;            @RequestBody CreateCommentRequest request
+&nbsp;    ) {
+&nbsp;        try {
+<b class="nc">&nbsp;            User me = currentUserOrNull();</b>
+<b class="nc">&nbsp;            if (me == null) return unauthorized();</b>
+&nbsp;
+<b class="nc">&nbsp;            if (request == null || request.getContent() == null || request.getContent().isBlank()) {</b>
+<b class="nc">&nbsp;                return badRequest(&quot;invalid_request&quot;);</b>
+&nbsp;            }
+&nbsp;
+<b class="nc">&nbsp;            String nickname = (me.getNickname() != null &amp;&amp; !me.getNickname().isBlank()) ? me.getNickname() : &quot;나&quot;;</b>
+&nbsp;
+<b class="nc">&nbsp;            CommentResponse data = postService.createComment(postId, me.getId(), nickname, request.getContent());</b>
+<b class="nc">&nbsp;            if (data == null) {</b>
+<b class="nc">&nbsp;                return ResponseEntity.status(HttpStatus.NOT_FOUND)</b>
+<b class="nc">&nbsp;                        .body(new ApiResponse&lt;&gt;(&quot;post_not_found&quot;, null));</b>
+&nbsp;            }
+<b class="nc">&nbsp;            return ResponseEntity.status(HttpStatus.CREATED)</b>
+<b class="nc">&nbsp;                    .body(new ApiResponse&lt;&gt;(&quot;create_success&quot;, data));</b>
+&nbsp;        } catch (Exception e) {
+<b class="nc">&nbsp;            return internalError();</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    @Operation(summary = &quot;댓글 수정&quot;, description = &quot;특정 댓글의 내용을 수정합니다.&quot;)
+&nbsp;    @PatchMapping(&quot;/{postId}/comments/{commentId}&quot;)
+&nbsp;    public ResponseEntity&lt;ApiResponse&lt;Object&gt;&gt; updateComment(
+&nbsp;            @PathVariable Long postId,
+&nbsp;            @PathVariable Long commentId,
+&nbsp;            @RequestBody UpdateCommentRequest request
+&nbsp;    ) {
+&nbsp;        try {
+<b class="nc">&nbsp;            User me = currentUserOrNull();</b>
+<b class="nc">&nbsp;            if (me == null) return unauthorized();</b>
+&nbsp;
+<b class="nc">&nbsp;            if (request == null || request.getContent() == null || request.getContent().isBlank()) {</b>
+<b class="nc">&nbsp;                return badRequest(&quot;invalid_request&quot;);</b>
+&nbsp;            }
+&nbsp;
+<b class="nc">&nbsp;            UpdateCommentResponse data =</b>
+<b class="nc">&nbsp;                    postService.updateComment(postId, commentId, me.getId(), request.getContent());</b>
+&nbsp;
+<b class="nc">&nbsp;            if (data == null) {</b>
+<b class="nc">&nbsp;                return ResponseEntity.status(HttpStatus.NOT_FOUND)</b>
+<b class="nc">&nbsp;                        .body(new ApiResponse&lt;&gt;(&quot;not_found_or_forbidden&quot;, null));</b>
+&nbsp;            }
+<b class="nc">&nbsp;            return ResponseEntity.ok(new ApiResponse&lt;&gt;(&quot;update_success&quot;, data));</b>
+&nbsp;        } catch (Exception e) {
+<b class="nc">&nbsp;            return internalError();</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    @Operation(summary = &quot;댓글 삭제&quot;, description = &quot;특정 댓글을 삭제합니다. 성공 시 204 반환.&quot;)
+&nbsp;    @DeleteMapping(&quot;/{postId}/comments/{commentId}&quot;)
+&nbsp;    public ResponseEntity&lt;?&gt; deleteComment(
+&nbsp;            @PathVariable Long postId,
+&nbsp;            @PathVariable Long commentId
+&nbsp;    ) {
+&nbsp;        try {
+<b class="nc">&nbsp;            User me = currentUserOrNull();</b>
+<b class="nc">&nbsp;            if (me == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();</b>
+&nbsp;
+<b class="nc">&nbsp;            boolean ok = postService.deleteComment(postId, commentId, me.getId());</b>
+<b class="nc">&nbsp;            if (!ok) return ResponseEntity.status(HttpStatus.NOT_FOUND).build();</b>
+<b class="nc">&nbsp;            return ResponseEntity.noContent().build();</b>
+&nbsp;        } catch (Exception e) {
+<b class="nc">&nbsp;            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;
+&nbsp;    @PostMapping(&quot;/{id}/views&quot;)
+&nbsp;    public ResponseEntity&lt;?&gt; increaseViews(@PathVariable Long id) {
+<b class="nc">&nbsp;        Integer views = postService.increaseViews(id);</b>
+<b class="nc">&nbsp;        if (views == null) return ResponseEntity.notFound().build();</b>
+<b class="nc">&nbsp;        return ResponseEntity.ok(Map.of(&quot;data&quot;, Map.of(&quot;views&quot;, views)));</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2025-12-02 20:57</div>
+</div>
+</body>
+</html>

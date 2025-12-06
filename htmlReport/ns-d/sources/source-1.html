@@ -1,0 +1,341 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > PostServiceImpl</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.example.restapi_demo.post.service</a>
+</div>
+
+<h1>Coverage Summary for Class: PostServiceImpl (com.example.restapi_demo.post.service)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">PostServiceImpl</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (26/26)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    56.5%
+  </span>
+  <span class="absValue">
+    (26/46)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    99.2%
+  </span>
+  <span class="absValue">
+    (117/118)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.example.restapi_demo.post.service;
+&nbsp;
+&nbsp;import com.example.restapi_demo.post.dto.*;
+&nbsp;import com.example.restapi_demo.post.model.Post;
+&nbsp;import com.example.restapi_demo.post.repository.JpaPostEntityRepository;
+&nbsp;import com.example.restapi_demo.post.repository.PostRepository;
+&nbsp;import com.example.restapi_demo.post.repository.PostRepository.DetailSeed;
+&nbsp;import org.springframework.stereotype.Service;
+&nbsp;import org.springframework.transaction.annotation.Transactional;
+&nbsp;
+&nbsp;import java.util.List;
+&nbsp;import java.util.Optional;
+&nbsp;import java.util.stream.Collectors;
+&nbsp;
+&nbsp;@Service
+&nbsp;public class PostServiceImpl implements PostService {
+&nbsp;
+&nbsp;    private final PostRepository repo;
+&nbsp;    private final JpaPostEntityRepository jpaRepo;
+&nbsp;
+<b class="fc">&nbsp;    public PostServiceImpl(PostRepository repo, JpaPostEntityRepository jpaRepo) {</b>
+<b class="fc">&nbsp;        this.repo = repo;</b>
+<b class="fc">&nbsp;        this.jpaRepo = jpaRepo;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    @Transactional(readOnly = true)
+&nbsp;    public PostListResponse getPosts() {
+<b class="fc">&nbsp;        List&lt;Post&gt; all = jpaRepo.findAllWithAuthorAndImages();</b>
+&nbsp;
+<b class="fc">&nbsp;        List&lt;PostSummary&gt; content = all.stream()</b>
+<b class="fc">&nbsp;                .map(p -&gt; new PostSummary(</b>
+<b class="fc">&nbsp;                        p.getId(),</b>
+<b class="fc">&nbsp;                        p.getTitle(),</b>
+<b class="pc">&nbsp;                        p.getAuthor() != null ? p.getAuthor().getNickname() : null,</b>
+<b class="fc">&nbsp;                        Optional.ofNullable(p.getLikesCount()).orElse(0),</b>
+<b class="fc">&nbsp;                        Optional.ofNullable(p.getCommentsCount()).orElse(0),</b>
+<b class="fc">&nbsp;                        Optional.ofNullable(p.getViews()).orElse(0),</b>
+<b class="fc">&nbsp;                        p.getCreatedAt()</b>
+&nbsp;                ))
+<b class="fc">&nbsp;                .collect(Collectors.toList());</b>
+&nbsp;
+<b class="fc">&nbsp;        int page = 0;</b>
+<b class="fc">&nbsp;        int size = 10;</b>
+<b class="fc">&nbsp;        long totalElements = content.size();</b>
+<b class="fc">&nbsp;        int totalPages = (int) Math.ceil((double) totalElements / size);</b>
+&nbsp;
+<b class="fc">&nbsp;        return new PostListResponse(content, page, size, totalElements, totalPages);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public List&lt;CommentResponse&gt; getComments(Long postId, Long requestUserId) {
+<b class="fc">&nbsp;        return repo.findCommentsByPostId(postId).stream()</b>
+<b class="fc">&nbsp;                .map(c -&gt; new CommentResponse(</b>
+<b class="fc">&nbsp;                        c.getId(),</b>
+<b class="pc">&nbsp;                        c.getAuthor() != null ? c.getAuthor().getNickname() : &quot;작성자&quot;,</b>
+<b class="fc">&nbsp;                        c.getContent(),</b>
+<b class="fc">&nbsp;                        c.getCreatedAt()</b>
+&nbsp;                ))
+<b class="fc">&nbsp;                .toList();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public PostDetailResponse getPostDetail(Long postId, Long requestUserId) {
+&nbsp;        try {
+<b class="fc">&nbsp;            Optional&lt;DetailSeed&gt; detailOpt = repo.findDetailById(postId);</b>
+&nbsp;
+<b class="fc">&nbsp;            return detailOpt</b>
+<b class="fc">&nbsp;                    .map(d -&gt; new PostDetailResponse(</b>
+<b class="fc">&nbsp;                            d.getPostId(),</b>
+<b class="fc">&nbsp;                            s(d.getTitle()),</b>
+<b class="fc">&nbsp;                            s(d.getAuthorName()),</b>
+<b class="fc">&nbsp;                            s(d.getContent()),</b>
+<b class="pc">&nbsp;                            d.getImages() != null ? d.getImages() : List.of(),</b>
+<b class="fc">&nbsp;                            nz(d.getLikesCount()),</b>
+<b class="fc">&nbsp;                            nz(d.getViews()),</b>
+<b class="pc">&nbsp;                            nz(d.getCommentsCount()),</b>
+<b class="fc">&nbsp;                            requestUserId != null &amp;&amp; requestUserId.equals(d.getAuthorId()),</b>
+<b class="fc">&nbsp;                            d.getCreatedAt(),</b>
+<b class="fc">&nbsp;                            d.getUpdatedAt()</b>
+&nbsp;                    ))
+<b class="fc">&nbsp;                    .orElseGet(() -&gt; fallbackDetail(postId, requestUserId));</b>
+&nbsp;        } catch (Exception e) {
+<b class="nc">&nbsp;            return fallbackDetail(postId, requestUserId);</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private PostDetailResponse fallbackDetail(Long postId, Long requestUserId) {
+<b class="fc">&nbsp;        return repo.findById(postId)</b>
+<b class="fc">&nbsp;                .filter(p -&gt; !Boolean.TRUE.equals(p.getIsDeleted()))</b>
+<b class="fc">&nbsp;                .map(p -&gt; new PostDetailResponse(</b>
+<b class="fc">&nbsp;                        p.getId(),</b>
+<b class="fc">&nbsp;                        s(p.getTitle()),</b>
+<b class="pc">&nbsp;                        p.getAuthor() != null ? s(p.getAuthor().getNickname()) : &quot;작성자&quot;,</b>
+<b class="fc">&nbsp;                        s(p.getContent()),</b>
+<b class="pc">&nbsp;                        p.getImages() != null</b>
+<b class="fc">&nbsp;                                ? p.getImages().stream().map(pi -&gt; s(pi.getUrl())).toList()</b>
+<b class="fc">&nbsp;                                : List.of(),</b>
+<b class="fc">&nbsp;                        nz(p.getLikesCount()),</b>
+<b class="fc">&nbsp;                        nz(p.getViews()),</b>
+<b class="pc">&nbsp;                        nz(p.getCommentsCount()),</b>
+<b class="pc">&nbsp;                        requestUserId != null &amp;&amp; p.getAuthor() != null</b>
+<b class="fc">&nbsp;                                &amp;&amp; requestUserId.equals(p.getAuthor().getId()),</b>
+<b class="fc">&nbsp;                        p.getCreatedAt(),</b>
+<b class="fc">&nbsp;                        p.getUpdatedAt()</b>
+&nbsp;                ))
+<b class="fc">&nbsp;                .orElse(null);</b>
+&nbsp;    }
+&nbsp;
+<b class="pc">&nbsp;    private String s(String v) { return v == null ? &quot;&quot; : v; }</b>
+<b class="pc">&nbsp;    private int nz(Integer v) { return v == null ? 0 : v; }</b>
+&nbsp;
+&nbsp;    @Override
+&nbsp;    @Transactional
+&nbsp;    public boolean deletePost(Long postId, Long requesterId) {
+<b class="fc">&nbsp;        return repo.findById(postId)</b>
+<b class="fc">&nbsp;                .filter(p -&gt; !Boolean.TRUE.equals(p.getIsDeleted()))</b>
+<b class="pc">&nbsp;                .filter(p -&gt; p.getAuthor() != null &amp;&amp; requesterId != null &amp;&amp; requesterId.equals(p.getAuthor().getId()))</b>
+<b class="fc">&nbsp;                .map(p -&gt; repo.deleteById(postId))</b>
+<b class="fc">&nbsp;                .orElse(false);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public Integer addLike(Long postId, Long requesterId) {
+<b class="fc">&nbsp;        return repo.incrementLikes(postId).orElse(null);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public Integer removeLike(Long postId, Long requesterId) {
+<b class="fc">&nbsp;        return repo.decrementLikes(postId).orElse(null);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    @Transactional
+&nbsp;    public CommentResponse createComment(Long postId, Long requesterId, String requesterNickname, String content) {
+<b class="pc">&nbsp;        String authorName = (requesterNickname == null || requesterNickname.isBlank()) ? &quot;나&quot; : requesterNickname;</b>
+&nbsp;
+<b class="fc">&nbsp;        return repo.addComment(postId, requesterId, authorName, content)</b>
+<b class="fc">&nbsp;                .map(c -&gt; new CommentResponse(</b>
+<b class="fc">&nbsp;                        c.getId(),</b>
+<b class="pc">&nbsp;                        (c.getAuthor() != null ? c.getAuthor().getNickname() : authorName),</b>
+<b class="fc">&nbsp;                        c.getContent(),</b>
+<b class="fc">&nbsp;                        c.getCreatedAt()</b>
+&nbsp;                ))
+<b class="fc">&nbsp;                .orElse(null);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public UpdateCommentResponse updateComment(Long postId, Long commentId, Long requesterId, String content) {
+<b class="fc">&nbsp;        return repo.updateComment(postId, commentId, requesterId, content)</b>
+<b class="fc">&nbsp;                .map(c -&gt; new UpdateCommentResponse(c.getId(), c.getContent()))</b>
+<b class="fc">&nbsp;                .orElse(null);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public boolean deleteComment(Long postId, Long commentId, Long requesterId) {
+<b class="fc">&nbsp;        return repo.deleteComment(postId, commentId, requesterId);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    @Transactional
+&nbsp;    public PostUpdateResponse updatePost(Long postId, Long requesterId, String title, String content, String image) {
+<b class="fc">&nbsp;        boolean allowed = repo.findById(postId)</b>
+<b class="fc">&nbsp;                .filter(p -&gt; !Boolean.TRUE.equals(p.getIsDeleted()))</b>
+<b class="pc">&nbsp;                .filter(p -&gt; p.getAuthor() != null &amp;&amp; requesterId != null &amp;&amp; requesterId.equals(p.getAuthor().getId()))</b>
+<b class="fc">&nbsp;                .isPresent();</b>
+&nbsp;
+<b class="fc">&nbsp;        if (!allowed) return null;</b>
+&nbsp;
+<b class="fc">&nbsp;        return repo.updatePost(postId, title, content, image)</b>
+<b class="fc">&nbsp;                .map((DetailSeed d) -&gt; new PostUpdateResponse(</b>
+<b class="fc">&nbsp;                        d.getPostId(),</b>
+<b class="fc">&nbsp;                        d.getTitle(),</b>
+<b class="fc">&nbsp;                        d.getContent(),</b>
+<b class="pc">&nbsp;                        (d.getImages() == null || d.getImages().isEmpty()) ? null : d.getImages().get(0),</b>
+<b class="fc">&nbsp;                        d.getUpdatedAt()</b>
+&nbsp;                ))
+<b class="fc">&nbsp;                .orElse(null);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public Post createPost(Long authorId, String authorName, String title, String content, String image) {
+<b class="fc">&nbsp;        return repo.createPost(authorId, authorName, title, content, image).orElse(null);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    @Transactional(readOnly = true)
+&nbsp;    public List&lt;PostSummary&gt; searchByTitle(String keyword) {
+<b class="fc">&nbsp;        return repo.findByTitleContainingIgnoreCase(keyword).stream()</b>
+<b class="fc">&nbsp;                .map(p -&gt; new PostSummary(</b>
+<b class="fc">&nbsp;                        p.getId(),</b>
+<b class="fc">&nbsp;                        p.getTitle(),</b>
+<b class="pc">&nbsp;                        p.getAuthor() != null ? p.getAuthor().getNickname() : null,</b>
+<b class="fc">&nbsp;                        p.getLikesCount(),</b>
+<b class="fc">&nbsp;                        p.getCommentsCount(),</b>
+<b class="fc">&nbsp;                        p.getViews(),</b>
+<b class="fc">&nbsp;                        p.getCreatedAt()</b>
+&nbsp;                ))
+<b class="fc">&nbsp;                .toList();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    @Transactional(readOnly = true)
+&nbsp;    public List&lt;PostSummary&gt; findByAuthorNickname(String nickname) {
+<b class="fc">&nbsp;        return repo.findByAuthorNickname(nickname).stream()</b>
+<b class="fc">&nbsp;                .map(p -&gt; new PostSummary(</b>
+<b class="fc">&nbsp;                        p.getId(),</b>
+<b class="fc">&nbsp;                        p.getTitle(),</b>
+<b class="pc">&nbsp;                        p.getAuthor() != null ? p.getAuthor().getNickname() : null,</b>
+<b class="fc">&nbsp;                        p.getLikesCount(),</b>
+<b class="fc">&nbsp;                        p.getCommentsCount(),</b>
+<b class="fc">&nbsp;                        p.getViews(),</b>
+<b class="fc">&nbsp;                        p.getCreatedAt()</b>
+&nbsp;                ))
+<b class="fc">&nbsp;                .toList();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    @Transactional
+&nbsp;    public Integer increaseViews(Long postId) {
+<b class="fc">&nbsp;        int updated = jpaRepo.increaseViews(postId);</b>
+<b class="fc">&nbsp;        if (updated == 0) return null;</b>
+<b class="fc">&nbsp;        return jpaRepo.findViews(postId).orElse(null);</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2025-12-02 20:57</div>
+</div>
+</body>
+</html>

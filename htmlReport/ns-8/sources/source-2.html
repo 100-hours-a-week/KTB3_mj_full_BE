@@ -1,0 +1,205 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > SecurityConfig</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.example.restapi_demo.config</a>
+</div>
+
+<h1>Coverage Summary for Class: SecurityConfig (com.example.restapi_demo.config)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">SecurityConfig</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/6)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/27)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.example.restapi_demo.config;
+&nbsp;
+&nbsp;import com.example.restapi_demo.auth.handler.JwtAccessDeniedHandler;
+&nbsp;import com.example.restapi_demo.auth.handler.JwtAuthenticationEntryPoint;
+&nbsp;import com.example.restapi_demo.auth.jwt.JwtFilter;
+&nbsp;import com.example.restapi_demo.auth.service.CustomUserDetailsService;
+&nbsp;import lombok.RequiredArgsConstructor;
+&nbsp;import org.springframework.context.annotation.Bean;
+&nbsp;import org.springframework.context.annotation.Configuration;
+&nbsp;import org.springframework.http.HttpMethod;
+&nbsp;import org.springframework.security.authentication.AuthenticationManager;
+&nbsp;import org.springframework.security.authentication.ProviderManager;
+&nbsp;import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+&nbsp;import org.springframework.security.config.Customizer;
+&nbsp;import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+&nbsp;import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+&nbsp;import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+&nbsp;import org.springframework.security.config.http.SessionCreationPolicy;
+&nbsp;import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+&nbsp;import org.springframework.security.crypto.password.PasswordEncoder;
+&nbsp;import org.springframework.security.web.SecurityFilterChain;
+&nbsp;import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+&nbsp;
+&nbsp;@Configuration
+&nbsp;@EnableWebSecurity
+&nbsp;@EnableMethodSecurity
+&nbsp;@RequiredArgsConstructor
+&nbsp;public class SecurityConfig {
+&nbsp;
+&nbsp;    private final CustomUserDetailsService customUserDetailsService;
+&nbsp;    private final JwtFilter jwtFilter;
+&nbsp;    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+&nbsp;    private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
+&nbsp;
+&nbsp;    @Bean
+&nbsp;    public PasswordEncoder passwordEncoder() {
+<b class="nc">&nbsp;        return new BCryptPasswordEncoder();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Bean
+&nbsp;    public AuthenticationManager authenticationManager() {
+<b class="nc">&nbsp;        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();</b>
+<b class="nc">&nbsp;        provider.setUserDetailsService(customUserDetailsService);</b>
+<b class="nc">&nbsp;        provider.setPasswordEncoder(passwordEncoder());</b>
+<b class="nc">&nbsp;        return new ProviderManager(provider);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Bean
+&nbsp;    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+<b class="nc">&nbsp;        http</b>
+&nbsp;                // CORS 설정
+<b class="nc">&nbsp;                .cors(Customizer.withDefaults())</b>
+&nbsp;
+&nbsp;                // CSRF 비활성화 (JWT는 헤더로 전송하므로 CSRF 공격 불가)
+<b class="nc">&nbsp;                .csrf(csrf -&gt; csrf.disable())</b>
+&nbsp;
+&nbsp;                // 세션 사용 안 함 (STATELESS)
+<b class="nc">&nbsp;                .sessionManagement(session -&gt;</b>
+<b class="nc">&nbsp;                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)</b>
+&nbsp;                )
+&nbsp;
+&nbsp;                // 폼 로그인, HTTP Basic 인증 비활성화
+<b class="nc">&nbsp;                .formLogin(form -&gt; form.disable())</b>
+<b class="nc">&nbsp;                .httpBasic(basic -&gt; basic.disable())</b>
+&nbsp;
+&nbsp;                // 예외 처리
+<b class="nc">&nbsp;                .exceptionHandling(exception -&gt; exception</b>
+<b class="nc">&nbsp;                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)  // 401</b>
+<b class="nc">&nbsp;                        .accessDeniedHandler(jwtAccessDeniedHandler)           // 403</b>
+&nbsp;                )
+&nbsp;
+&nbsp;                // 인가 규칙
+<b class="nc">&nbsp;                .authorizeHttpRequests(auth -&gt; auth</b>
+<b class="nc">&nbsp;                        .requestMatchers(HttpMethod.OPTIONS, &quot;/**&quot;).permitAll()</b>
+&nbsp;
+&nbsp;                        // ★★★ 회원가입 관련 API 모두 허용 ★★★
+<b class="nc">&nbsp;                        .requestMatchers(HttpMethod.POST, &quot;/api/users/signup&quot;).permitAll()</b>
+<b class="nc">&nbsp;                        .requestMatchers(HttpMethod.GET, &quot;/api/users/exists/email&quot;).permitAll()</b>
+<b class="nc">&nbsp;                        .requestMatchers(HttpMethod.GET, &quot;/api/users/count/nickname&quot;).permitAll()</b>
+&nbsp;
+&nbsp;                        // 로그인
+<b class="nc">&nbsp;                        .requestMatchers(HttpMethod.POST, &quot;/api/auth/login&quot;).permitAll()</b>
+&nbsp;
+&nbsp;                        // 게시글 조회
+<b class="nc">&nbsp;                        .requestMatchers(HttpMethod.GET, &quot;/api/posts/**&quot;).permitAll()</b>
+&nbsp;
+&nbsp;                        // Swagger
+<b class="nc">&nbsp;                        .requestMatchers(&quot;/v3/api-docs/**&quot;, &quot;/swagger-ui/**&quot;, &quot;/swagger-ui.html&quot;).permitAll()</b>
+&nbsp;
+&nbsp;                        // 나머지 /api/** 인증 필요
+<b class="nc">&nbsp;                        .requestMatchers(&quot;/api/**&quot;).authenticated()</b>
+&nbsp;
+<b class="nc">&nbsp;                        .anyRequest().permitAll()</b>
+&nbsp;                )
+&nbsp;
+&nbsp;                // JWT 필터 추가 (UsernamePasswordAuthenticationFilter 앞에)
+<b class="nc">&nbsp;                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);</b>
+&nbsp;
+<b class="nc">&nbsp;        return http.build();</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2025-12-02 20:57</div>
+</div>
+</body>
+</html>

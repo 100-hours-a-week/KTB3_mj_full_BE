@@ -1,0 +1,177 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > PostDetailResponse</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.example.restapi_demo.post.dto</a>
+</div>
+
+<h1>Coverage Summary for Class: PostDetailResponse (com.example.restapi_demo.post.dto)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">PostDetailResponse</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    7.7%
+  </span>
+  <span class="absValue">
+    (1/13)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    50%
+  </span>
+  <span class="absValue">
+    (12/24)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.example.restapi_demo.post.dto;
+&nbsp;
+&nbsp;import io.swagger.v3.oas.annotations.media.Schema;
+&nbsp;import java.time.LocalDateTime;
+&nbsp;import java.util.List;
+&nbsp;
+&nbsp;
+&nbsp;@Schema(description = &quot;게시글 상세 조회 응답 데이터&quot;)
+&nbsp;public class PostDetailResponse {
+&nbsp;
+&nbsp;    @Schema(description = &quot;게시글 ID&quot;, example = &quot;101&quot;)
+&nbsp;    private Long post_id;
+&nbsp;
+&nbsp;    @Schema(description = &quot;게시글 제목&quot;, example = &quot;오늘의 일기&quot;)
+&nbsp;    private String title;
+&nbsp;
+&nbsp;    @Schema(description = &quot;작성자 닉네임&quot;, example = &quot;박성현&quot;)
+&nbsp;    private String author;
+&nbsp;
+&nbsp;    @Schema(description = &quot;게시글 본문 내용&quot;, example = &quot;오늘은 날씨가 참 좋았습니다.&quot;)
+&nbsp;    private String content;
+&nbsp;
+&nbsp;    @Schema(description = &quot;이미지 URL 목록&quot;, example = &quot;[\&quot;https://example.com/image1.jpg\&quot;, \&quot;https://example.com/image2.jpg\&quot;]&quot;)
+&nbsp;    private List&lt;String&gt; images;
+&nbsp;
+&nbsp;    @Schema(description = &quot;좋아요 수&quot;, example = &quot;25&quot;)
+&nbsp;    private int likes;
+&nbsp;
+&nbsp;    @Schema(description = &quot;조회수&quot;, example = &quot;134&quot;)
+&nbsp;    private int views;
+&nbsp;
+&nbsp;    @Schema(description = &quot;댓글 개수&quot;, example = &quot;3&quot;)
+&nbsp;    private int comments_count;
+&nbsp;
+&nbsp;    @Schema(description = &quot;현재 요청자가 작성자인지 여부&quot;, example = &quot;true&quot;)
+&nbsp;    private boolean is_author;
+&nbsp;
+&nbsp;    @Schema(description = &quot;게시글 생성 시각&quot;, example = &quot;2025-10-19T14:35:00&quot;)
+&nbsp;    private LocalDateTime created_at;
+&nbsp;
+&nbsp;    @Schema(description = &quot;게시글 수정 시각&quot;, example = &quot;2025-10-19T15:00:00&quot;)
+&nbsp;    private LocalDateTime updated_at;
+&nbsp;
+<b class="nc">&nbsp;    public PostDetailResponse() {}</b>
+&nbsp;
+&nbsp;    public PostDetailResponse(Long post_id, String title, String author, String content, List&lt;String&gt; images,
+&nbsp;                              int likes, int views, int comments_count, boolean is_author,
+<b class="fc">&nbsp;                              LocalDateTime created_at, LocalDateTime updated_at) {</b>
+<b class="fc">&nbsp;        this.post_id = post_id;</b>
+<b class="fc">&nbsp;        this.title = title;</b>
+<b class="fc">&nbsp;        this.author = author;</b>
+<b class="fc">&nbsp;        this.content = content;</b>
+<b class="fc">&nbsp;        this.images = images;</b>
+<b class="fc">&nbsp;        this.likes = likes;</b>
+<b class="fc">&nbsp;        this.views = views;</b>
+<b class="fc">&nbsp;        this.comments_count = comments_count;</b>
+<b class="fc">&nbsp;        this.is_author = is_author;</b>
+<b class="fc">&nbsp;        this.created_at = created_at;</b>
+<b class="fc">&nbsp;        this.updated_at = updated_at;</b>
+&nbsp;    }
+&nbsp;
+<b class="nc">&nbsp;    public Long getPost_id() { return post_id; }</b>
+<b class="nc">&nbsp;    public String getTitle() { return title; }</b>
+<b class="nc">&nbsp;    public String getAuthor() { return author; }</b>
+<b class="nc">&nbsp;    public String getContent() { return content; }</b>
+<b class="nc">&nbsp;    public List&lt;String&gt; getImages() { return images; }</b>
+<b class="nc">&nbsp;    public int getLikes() { return likes; }</b>
+<b class="nc">&nbsp;    public int getViews() { return views; }</b>
+<b class="nc">&nbsp;    public int getComments_count() { return comments_count; }</b>
+<b class="nc">&nbsp;    public boolean isIs_author() { return is_author; } // JSON 호환용 네이밍</b>
+<b class="nc">&nbsp;    public LocalDateTime getCreated_at() { return created_at; }</b>
+<b class="nc">&nbsp;    public LocalDateTime getUpdated_at() { return updated_at; }</b>
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2025-12-02 20:57</div>
+</div>
+</body>
+</html>

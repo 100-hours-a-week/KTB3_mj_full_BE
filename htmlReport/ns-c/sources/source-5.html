@@ -1,0 +1,133 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > JpaPostEntityRepository</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.example.restapi_demo.post.repository</a>
+</div>
+
+<h1>Coverage Summary for Class: JpaPostEntityRepository (com.example.restapi_demo.post.repository)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+</tr>
+  <tr>
+    <td class="name">JpaPostEntityRepository$MockitoMock$7UOb1Kzw</td>
+  </tr>
+  <tr>
+    <td class="name">JpaPostEntityRepository$MockitoMock$7UOb1Kzw$auxiliary$6bnBFjZj</td>
+  </tr>
+  <tr>
+    <td class="name">JpaPostEntityRepository$MockitoMock$7UOb1Kzw$auxiliary$KgYhXSlZ</td>
+  </tr>
+<tr>
+  <td class="name"><strong>Total</strong></td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;// src/main/java/com/example/restapi_demo/post/repository/JpaPostEntityRepository.java
+&nbsp;package com.example.restapi_demo.post.repository;
+&nbsp;
+&nbsp;import com.example.restapi_demo.post.model.Comment;
+&nbsp;import com.example.restapi_demo.post.model.Post;
+&nbsp;import org.springframework.data.jpa.repository.*;
+&nbsp;import org.springframework.data.repository.query.Param;
+&nbsp;import org.springframework.stereotype.Repository;
+&nbsp;
+&nbsp;import java.util.List;
+&nbsp;import java.util.Optional;
+&nbsp;
+&nbsp;@Repository
+&nbsp;public interface JpaPostEntityRepository extends JpaRepository&lt;Post, Long&gt; {
+&nbsp;
+&nbsp;    @Query(&quot;&quot;&quot;
+&nbsp;       select distinct p
+&nbsp;       from Post p
+&nbsp;       join fetch p.author a
+&nbsp;       left join fetch p.images imgs
+&nbsp;       where (p.isDeleted = false or p.isDeleted is null)
+&nbsp;       order by p.id desc
+&nbsp;       &quot;&quot;&quot;)
+&nbsp;    List&lt;Post&gt; findAllWithAuthorAndImages();
+&nbsp;
+&nbsp;    @Query(&quot;&quot;&quot;
+&nbsp;       select distinct p
+&nbsp;       from Post p
+&nbsp;       join fetch p.author a
+&nbsp;       left join fetch p.images imgs
+&nbsp;       where p.id = :postId
+&nbsp;         and (p.isDeleted = false or p.isDeleted is null)
+&nbsp;       &quot;&quot;&quot;)
+&nbsp;    Optional&lt;Post&gt; findDetailWithAuthorAndImages(@Param(&quot;postId&quot;) Long postId);
+&nbsp;
+&nbsp;    @Query(&quot;&quot;&quot;
+&nbsp;       select c
+&nbsp;       from Comment c
+&nbsp;       join fetch c.author ca
+&nbsp;       where c.post.id = :postId
+&nbsp;       order by c.createdAt asc, c.id asc
+&nbsp;       &quot;&quot;&quot;)
+&nbsp;    List&lt;Comment&gt; findCommentsByPostId(@Param(&quot;postId&quot;) Long postId);
+&nbsp;
+&nbsp;    List&lt;Post&gt; findByTitleContainingIgnoreCaseAndIsDeletedFalse(String keyword);
+&nbsp;    List&lt;Post&gt; findByAuthor_NicknameAndIsDeletedFalse(String nickname);
+&nbsp;
+&nbsp;
+&nbsp;    @Modifying(clearAutomatically = true, flushAutomatically = true)
+&nbsp;    @Query(&quot;update Post p set p.views = coalesce(p.views, 0) + 1 where p.id = :postId&quot;)
+&nbsp;    int increaseViews(@Param(&quot;postId&quot;) Long postId);
+&nbsp;
+&nbsp;
+&nbsp;    @Query(&quot;select p.views from Post p where p.id = :postId&quot;)
+&nbsp;    Optional&lt;Integer&gt; findViews(@Param(&quot;postId&quot;) Long postId);
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2025-12-02 20:57</div>
+</div>
+</body>
+</html>

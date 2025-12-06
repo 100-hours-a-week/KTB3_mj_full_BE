@@ -1,0 +1,205 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > JwtFilter</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.example.restapi_demo.auth.jwt</a>
+</div>
+
+<h1>Coverage Summary for Class: JwtFilter (com.example.restapi_demo.auth.jwt)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">JwtFilter</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/8)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/29)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.example.restapi_demo.auth.jwt;
+&nbsp;
+&nbsp;import jakarta.servlet.FilterChain;
+&nbsp;import jakarta.servlet.ServletException;
+&nbsp;import jakarta.servlet.http.HttpServletRequest;
+&nbsp;import jakarta.servlet.http.HttpServletResponse;
+&nbsp;import lombok.RequiredArgsConstructor;
+&nbsp;import org.springframework.security.core.Authentication;
+&nbsp;import org.springframework.security.core.context.SecurityContextHolder;
+&nbsp;import org.springframework.stereotype.Component;
+&nbsp;import org.springframework.util.StringUtils;
+&nbsp;import org.springframework.web.filter.OncePerRequestFilter;
+&nbsp;
+&nbsp;import java.io.IOException;
+&nbsp;
+&nbsp;@Component
+&nbsp;@RequiredArgsConstructor
+&nbsp;public class JwtFilter extends OncePerRequestFilter {
+&nbsp;
+&nbsp;    public static final String AUTHORIZATION_HEADER = &quot;Authorization&quot;;
+&nbsp;    public static final String BEARER_PREFIX = &quot;Bearer &quot;;
+&nbsp;
+&nbsp;    private final TokenProvider tokenProvider;
+&nbsp;
+&nbsp;    @Override
+&nbsp;    protected void doFilterInternal(
+&nbsp;            HttpServletRequest request,
+&nbsp;            HttpServletResponse response,
+&nbsp;            FilterChain filterChain
+&nbsp;    ) throws ServletException, IOException {
+&nbsp;
+&nbsp;        // ==========================
+&nbsp;        // 1. 필터 진입 로그
+&nbsp;        // ==========================
+<b class="nc">&nbsp;        String uri = request.getRequestURI();</b>
+<b class="nc">&nbsp;        String method = request.getMethod();</b>
+<b class="nc">&nbsp;        String authHeader = request.getHeader(AUTHORIZATION_HEADER);</b>
+&nbsp;
+<b class="nc">&nbsp;        System.out.println(&quot;\n========== [JwtFilter] 요청 진입 ==========&quot;);</b>
+<b class="nc">&nbsp;        System.out.println(&quot;요청 URI    : &quot; + uri);</b>
+<b class="nc">&nbsp;        System.out.println(&quot;HTTP 메서드 : &quot; + method);</b>
+<b class="nc">&nbsp;        System.out.println(&quot;Auth 헤더   : &quot; + authHeader);</b>
+<b class="nc">&nbsp;        System.out.println(&quot;=========================================&quot;);</b>
+&nbsp;
+&nbsp;        // 2. 헤더에서 JWT 토큰 추출
+<b class="nc">&nbsp;        String jwt = resolveToken(request);</b>
+<b class="nc">&nbsp;        System.out.println(&quot;[JwtFilter] resolveToken 결과(jwt): &quot; + jwt);</b>
+&nbsp;
+&nbsp;        try {
+&nbsp;            // 3. 토큰 유효성 검사
+<b class="nc">&nbsp;            if (StringUtils.hasText(jwt)) {</b>
+<b class="nc">&nbsp;                System.out.println(&quot;[JwtFilter] 토큰 문자열 존재 → 유효성 검사 시작&quot;);</b>
+&nbsp;
+<b class="nc">&nbsp;                boolean valid = tokenProvider.validateToken(jwt);</b>
+<b class="nc">&nbsp;                System.out.println(&quot;[JwtFilter] tokenProvider.validateToken(jwt) = &quot; + valid);</b>
+&nbsp;
+<b class="nc">&nbsp;                if (valid) {</b>
+&nbsp;                    // 4. 토큰이 유효하면 Authentication 객체를 가져와서 SecurityContext에 저장
+<b class="nc">&nbsp;                    Authentication authentication = tokenProvider.getAuthentication(jwt);</b>
+<b class="nc">&nbsp;                    SecurityContextHolder.getContext().setAuthentication(authentication);</b>
+&nbsp;
+<b class="nc">&nbsp;                    System.out.println(&quot;✅ JWT 인증 성공: &quot; + authentication.getName());</b>
+&nbsp;                } else {
+<b class="nc">&nbsp;                    System.out.println(&quot;❌ JWT 토큰이 유효하지 않음 (validateToken=false)&quot;);</b>
+&nbsp;                }
+&nbsp;            } else {
+<b class="nc">&nbsp;                System.out.println(&quot;[JwtFilter] JWT 토큰이 비어있음(Authorization 헤더 없음 또는 형식 불일치)&quot;);</b>
+&nbsp;            }
+&nbsp;        } catch (Exception e) {
+<b class="nc">&nbsp;            System.out.println(&quot;❗ [JwtFilter] 토큰 처리 중 예외 발생: &quot; + e.getClass().getName());</b>
+<b class="nc">&nbsp;            System.out.println(&quot;메시지: &quot; + e.getMessage());</b>
+<b class="nc">&nbsp;            e.printStackTrace();</b>
+&nbsp;            // 예외가 발생하더라도 필터 체인은 계속 흘려보냄
+&nbsp;        }
+&nbsp;
+&nbsp;        // 5. 다음 필터로 진행
+<b class="nc">&nbsp;        System.out.println(&quot;[JwtFilter] 다음 필터로 체인 진행\n&quot;);</b>
+<b class="nc">&nbsp;        filterChain.doFilter(request, response);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // Authorization 헤더에서 토큰 추출
+&nbsp;    private String resolveToken(HttpServletRequest request) {
+<b class="nc">&nbsp;        String bearerToken = request.getHeader(AUTHORIZATION_HEADER);</b>
+<b class="nc">&nbsp;        if (StringUtils.hasText(bearerToken) &amp;&amp; bearerToken.startsWith(BEARER_PREFIX)) {</b>
+<b class="nc">&nbsp;            return bearerToken.substring(BEARER_PREFIX.length());</b>
+&nbsp;        }
+<b class="nc">&nbsp;        return null;</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2025-12-02 20:57</div>
+</div>
+</body>
+</html>
