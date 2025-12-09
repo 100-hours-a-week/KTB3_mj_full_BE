@@ -1,11 +1,10 @@
 package com.example.restapi_demo.post.controller;
 
+import com.example.restapi_demo.auth.jwt.CustomUserPrincipal;
 import com.example.restapi_demo.common.api.ApiResponse;
 import com.example.restapi_demo.post.dto.*;
 import com.example.restapi_demo.post.model.Post;
 import com.example.restapi_demo.post.service.PostService;
-import com.example.restapi_demo.user.model.User;
-import com.example.restapi_demo.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -13,7 +12,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,11 +22,10 @@ import java.util.Map;
 public class PostController {
 
     private final PostService postService;
-    private final UserService userService;
 
-    public PostController(PostService postService, UserService userService) {
+    // UserService 의존 제거 (JWT의 principal만 사용)
+    public PostController(PostService postService) {
         this.postService = postService;
-        this.userService = userService;
     }
 
     private ResponseEntity<ApiResponse<Object>> badRequest(String code) {
@@ -43,7 +40,11 @@ public class PostController {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>("internal_server_error", null));
     }
 
-    private String currentEmailOrNull() {
+    /**
+     * SecurityContext에서 CustomUserPrincipal 꺼내기
+     * - 인증 안 되어 있으면 null
+     */
+    private CustomUserPrincipal currentUserOrNull() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) return null;
 
@@ -51,23 +52,25 @@ public class PostController {
         if (principal == null) return null;
         if ("anonymousUser".equals(principal)) return null;
 
-        if (principal instanceof UserDetails userDetails) {
-            return userDetails.getUsername();
+        if (principal instanceof CustomUserPrincipal custom) {
+            return custom;
         }
-        return principal.toString();
-    }
 
-    private User currentUserOrNull() {
-        String email = currentEmailOrNull();
-        if (email == null || email.isBlank()) return null;
-        return userService.findByEmail(email);
+        // 다른 타입(principal)을 쓰는 경우에는 여기서 처리 추가 가능
+        return null;
     }
 
     private Long currentUserIdOrNull() {
-        User u = currentUserOrNull();
+        CustomUserPrincipal u = currentUserOrNull();
         return (u == null ? null : u.getId());
     }
 
+    private String currentUserNicknameOrDefault(String defaultName) {
+        CustomUserPrincipal u = currentUserOrNull();
+        if (u == null) return defaultName;
+        String nickname = u.getNickname();
+        return (nickname != null && !nickname.isBlank()) ? nickname : defaultName;
+    }
 
     @Operation(summary = "게시글 목록 조회", description = "전체 게시글 목록을 조회합니다.")
     @io.swagger.v3.oas.annotations.responses.ApiResponses({
@@ -149,12 +152,11 @@ public class PostController {
         }
     }
 
-
     @Operation(summary = "게시글 생성", description = "새로운 게시글을 작성합니다. 제목은 최대 26자.")
     @PostMapping
     public ResponseEntity<ApiResponse<Object>> createPost(@RequestBody Map<String, String> req) {
         try {
-            User me = currentUserOrNull();
+            CustomUserPrincipal me = currentUserOrNull();
             if (me == null) return unauthorized();
 
             if (req == null) return badRequest("invalid_request");
@@ -165,7 +167,7 @@ public class PostController {
             if (title == null || title.isBlank() || title.length() > 26) return badRequest("invalid_request");
             if (content == null || content.isBlank()) return badRequest("invalid_request");
 
-            String authorName = (me.getNickname() != null && !me.getNickname().isBlank()) ? me.getNickname() : "나";
+            String authorName = currentUserNicknameOrDefault("나");
 
             Post newPost = postService.createPost(me.getId(), authorName, title, content, image);
             if (newPost == null) return internalError();
@@ -192,7 +194,7 @@ public class PostController {
             @RequestBody PostUpdateRequest request
     ) {
         try {
-            User me = currentUserOrNull();
+            CustomUserPrincipal me = currentUserOrNull();
             if (me == null) return unauthorized();
 
             if (request == null) return badRequest("invalid_request");
@@ -218,7 +220,7 @@ public class PostController {
     @DeleteMapping("/{postId}")
     public ResponseEntity<?> delete(@PathVariable Long postId) {
         try {
-            User me = currentUserOrNull();
+            CustomUserPrincipal me = currentUserOrNull();
             if (me == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
             boolean deleted = postService.deletePost(postId, me.getId());
@@ -235,7 +237,7 @@ public class PostController {
     @PostMapping("/{postId}/likes")
     public ResponseEntity<ApiResponse<Object>> like(@PathVariable Long postId) {
         try {
-            User me = currentUserOrNull();
+            CustomUserPrincipal me = currentUserOrNull();
             if (me == null) return unauthorized();
 
             Integer newLikes = postService.addLike(postId, me.getId());
@@ -253,7 +255,7 @@ public class PostController {
     @DeleteMapping("/{postId}/likes")
     public ResponseEntity<ApiResponse<Object>> unlike(@PathVariable Long postId) {
         try {
-            User me = currentUserOrNull();
+            CustomUserPrincipal me = currentUserOrNull();
             if (me == null) return unauthorized();
 
             Integer newLikes = postService.removeLike(postId, me.getId());
@@ -274,14 +276,14 @@ public class PostController {
             @RequestBody CreateCommentRequest request
     ) {
         try {
-            User me = currentUserOrNull();
+            CustomUserPrincipal me = currentUserOrNull();
             if (me == null) return unauthorized();
 
             if (request == null || request.getContent() == null || request.getContent().isBlank()) {
                 return badRequest("invalid_request");
             }
 
-            String nickname = (me.getNickname() != null && !me.getNickname().isBlank()) ? me.getNickname() : "나";
+            String nickname = currentUserNicknameOrDefault("나");
 
             CommentResponse data = postService.createComment(postId, me.getId(), nickname, request.getContent());
             if (data == null) {
@@ -303,7 +305,7 @@ public class PostController {
             @RequestBody UpdateCommentRequest request
     ) {
         try {
-            User me = currentUserOrNull();
+            CustomUserPrincipal me = currentUserOrNull();
             if (me == null) return unauthorized();
 
             if (request == null || request.getContent() == null || request.getContent().isBlank()) {
@@ -330,7 +332,7 @@ public class PostController {
             @PathVariable Long commentId
     ) {
         try {
-            User me = currentUserOrNull();
+            CustomUserPrincipal me = currentUserOrNull();
             if (me == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
             boolean ok = postService.deleteComment(postId, commentId, me.getId());
@@ -340,7 +342,6 @@ public class PostController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-
 
     @PostMapping("/{id}/views")
     public ResponseEntity<?> increaseViews(@PathVariable Long id) {

@@ -7,6 +7,7 @@ import com.example.restapi_demo.user.model.User;
 import com.example.restapi_demo.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -31,41 +33,41 @@ public class AuthController {
         try {
             if (req == null || req.getEmail() == null || req.getEmail().isBlank()
                     || req.getPassword() == null || req.getPassword().isBlank()) {
+
+                log.warn("로그인 요청 검증 실패: 이메일 또는 비밀번호가 비어있음");
                 return ResponseEntity.badRequest()
                         .body(new ApiResponse<>("invalid_request", null));
             }
 
-            System.out.println("\n========== 로그인 시도 ==========");
-            System.out.println("이메일: " + req.getEmail());
-            System.out.println("비밀번호 길이: " + req.getPassword().length());
-            System.out.println("================================\n");
-
-            // 인증
+            // 1. 인증
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(req.getEmail(), req.getPassword())
             );
 
-            // 권한 정보 추출
+            // 2. 권한 정보 추출
             String authorities = authentication.getAuthorities().stream()
                     .map(GrantedAuthority::getAuthority)
                     .collect(Collectors.joining(","));
 
-            System.out.println("\n========== 로그인 성공 ==========");
-            System.out.println("인증된 사용자: " + authentication.getName());
-            System.out.println("권한: " + authorities);
+            log.info("로그인 성공: email={}, authorities={}", authentication.getName(), authorities);
 
-            // JWT 토큰 생성
-            String token = tokenProvider.createToken(req.getEmail(), authorities);
-            System.out.println("JWT 토큰 생성됨: " + token.substring(0, 20) + "...");
-            System.out.println("================================\n");
-
-            // 사용자 정보 조회
+            // 3. 사용자 정보 조회 (토큰 생성 & 응답 데이터용)
             User user = userService.findByEmail(req.getEmail());
             if (user == null) {
+                log.error("로그인 후 사용자 조회 실패: email={}", req.getEmail());
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .body(new ApiResponse<>("internal_server_error", null));
             }
 
+            // 4. JWT 토큰 생성 (userId, email, nickname, authorities 포함)
+            String token = tokenProvider.createToken(
+                    user.getId(),
+                    user.getEmail(),
+                    user.getNickname(),
+                    authorities
+            );
+
+            // 5. 응답 반환
             return ResponseEntity.ok(
                     new ApiResponse<>("loginSuccess", Map.of(
                             "token", token,
@@ -76,19 +78,15 @@ public class AuthController {
             );
 
         } catch (BadCredentialsException e) {
-            System.out.println("\n========== 로그인 실패 (BadCredentials) ==========");
-            System.out.println("이메일: " + req.getEmail());
-            System.out.println("원인: " + e.getMessage());
-            System.out.println("=================================================\n");
+            log.warn("로그인 실패 (BadCredentials): email={}, message={}",
+                    req != null ? req.getEmail() : "null", e.getMessage());
 
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ApiResponse<>("invalid_credentials", null));
+
         } catch (Exception e) {
-            System.out.println("\n========== 로그인 예외 발생 ==========");
-            System.out.println("예외 타입: " + e.getClass().getName());
-            System.out.println("메시지: " + e.getMessage());
-            e.printStackTrace();
-            System.out.println("=====================================\n");
+            log.error("로그인 처리 중 예외 발생: email={}",
+                    req != null ? req.getEmail() : "null", e);
 
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>("internal_server_error", null));

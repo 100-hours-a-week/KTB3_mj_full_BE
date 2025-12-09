@@ -1,11 +1,8 @@
 package com.example.restapi_demo.user.model;
 
-import com.example.restapi_demo.post.model.Post;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(
@@ -53,21 +50,6 @@ public class User {
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
-
-    @OneToMany(mappedBy = "author", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<Post> posts = new ArrayList<>();
-
-
-    public void addPost(Post post) {
-        posts.add(post);
-        post.setAuthor(this);
-    }
-
-    public void removePost(Post post) {
-        posts.remove(post);
-        post.setAuthor(null);
-    }
 
     @PrePersist
     void onCreate() {
