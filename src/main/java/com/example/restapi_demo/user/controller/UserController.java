@@ -1,5 +1,6 @@
 package com.example.restapi_demo.user.controller;
 
+import com.example.restapi_demo.auth.jwt.CustomUserPrincipal;
 import com.example.restapi_demo.common.api.ApiResponse;
 import com.example.restapi_demo.user.dto.FieldErrorDTO;
 import com.example.restapi_demo.user.dto.PasswordChangeRequest;
@@ -12,9 +13,7 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.http.*;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,28 +25,9 @@ import java.util.*;
 public class UserController {
 
     private final UserService userService;
+
     public UserController(UserService userService) {
         this.userService = userService;
-    }
-
-    private String currentEmailOrNull() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated()) return null;
-
-        Object principal = auth.getPrincipal();
-        if (principal == null) return null;
-        if ("anonymousUser".equals(principal)) return null;
-
-        if (principal instanceof UserDetails userDetails) {
-            return userDetails.getUsername();
-        }
-        return principal.toString();
-    }
-
-    private User currentUserOrNull() {
-        String email = currentEmailOrNull();
-        if (email == null || email.isBlank()) return null;
-        return userService.findByEmail(email);
     }
 
     @Operation(
@@ -97,19 +77,26 @@ public class UserController {
     })
     @GetMapping("/me")
     @Transactional(readOnly = true)
-    public ResponseEntity<ApiResponse<Object>> me() {
+    public ResponseEntity<ApiResponse<Object>> me(
+            @AuthenticationPrincipal CustomUserPrincipal principal
+    ) {
         try {
-            User u = currentUserOrNull();
-            if (u == null) {
+            if (principal == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(new ApiResponse<>("auth_required", null));
             }
 
+            User user = userService.findById(principal.getId());
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new ApiResponse<>("user_not_found", null));
+            }
+
             Map<String, Object> data = new HashMap<>();
-            data.put("id", u.getId());
-            data.put("email", u.getEmail());
-            data.put("nickname", u.getNickname());
-            data.put("profile_image", u.getProfileImageUrl() != null ? u.getProfileImageUrl() : "");
+            data.put("id", user.getId());
+            data.put("email", user.getEmail());
+            data.put("nickname", user.getNickname());
+            data.put("profile_image", user.getProfileImageUrl() != null ? user.getProfileImageUrl() : "");
 
             return ResponseEntity.ok(new ApiResponse<>("read_success", data));
         } catch (Exception e) {
@@ -133,6 +120,7 @@ public class UserController {
     })
     @PatchMapping("/me")
     public ResponseEntity<ApiResponse<Object>> updateMe(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     content = @Content(schema = @Schema(implementation = UpdateUserRequest.class))
@@ -140,8 +128,7 @@ public class UserController {
             @RequestBody UpdateUserRequest req
     ) {
         try {
-            User exist = currentUserOrNull();
-            if (exist == null) {
+            if (principal == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(new ApiResponse<>("auth_required", null));
             }
@@ -160,7 +147,7 @@ public class UserController {
                         .body(new ApiResponse<>("invalid_request", errors));
             }
 
-            User updated = userService.updateProfile(exist.getId(), nickname, profileImageUrl);
+            User updated = userService.updateProfile(principal.getId(), nickname, profileImageUrl);
             if (updated == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(new ApiResponse<>("user_not_found", null));
@@ -188,15 +175,16 @@ public class UserController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "internal_server_error")
     })
     @DeleteMapping("/me")
-    public ResponseEntity<ApiResponse<Object>> deleteMe() {
+    public ResponseEntity<ApiResponse<Object>> deleteMe(
+            @AuthenticationPrincipal CustomUserPrincipal principal
+    ) {
         try {
-            User exist = currentUserOrNull();
-            if (exist == null) {
+            if (principal == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(new ApiResponse<>("auth_required", null));
             }
 
-            boolean deleted = userService.deleteMe(exist.getId());
+            boolean deleted = userService.deleteMe(principal.getId());
             if (!deleted) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(new ApiResponse<>("user_not_found", null));
@@ -227,6 +215,7 @@ public class UserController {
     })
     @PatchMapping("/me/password")
     public ResponseEntity<ApiResponse<Object>> changePassword(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     content = @Content(schema = @Schema(implementation = PasswordChangeRequest.class))
@@ -234,13 +223,12 @@ public class UserController {
             @RequestBody PasswordChangeRequest req
     ) {
         try {
-            User exist = currentUserOrNull();
-            if (exist == null) {
+            if (principal == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(new ApiResponse<>("auth_required", null));
             }
 
-            var result = userService.changePassword(exist.getId(), req.getNew_password(), req.getNew_password_confirm());
+            var result = userService.changePassword(principal.getId(), req.getNew_password(), req.getNew_password_confirm());
             if (result == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(new ApiResponse<>("user_not_found", null));

@@ -5,6 +5,10 @@ import com.example.restapi_demo.post.model.Post;
 import com.example.restapi_demo.post.repository.JpaPostEntityRepository;
 import com.example.restapi_demo.post.repository.PostRepository;
 import com.example.restapi_demo.post.repository.PostRepository.DetailSeed;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,12 +27,21 @@ public class PostServiceImpl implements PostService {
         this.jpaRepo = jpaRepo;
     }
 
+
     @Override
     @Transactional(readOnly = true)
-    public PostListResponse getPosts() {
-        List<Post> all = jpaRepo.findAllWithAuthorAndImages();
+    public PostListResponse getPosts(int page, int size) {
+        // page, size에 대한 방어 코드 (음수 들어오는 것 방지)
+        int pageIndex = Math.max(page, 0);
+        int pageSize = (size <= 0) ? 10 : size;
 
-        List<PostSummary> content = all.stream()
+        // 최신 글 기준 정렬
+        Pageable pageable = PageRequest.of(pageIndex, pageSize, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        // ★ JPA 페이징 조회
+        Page<Post> postPage = jpaRepo.findAll(pageable);
+
+        List<PostSummary> content = postPage.getContent().stream()
                 .map(p -> new PostSummary(
                         p.getId(),
                         p.getTitle(),
@@ -38,15 +51,17 @@ public class PostServiceImpl implements PostService {
                         Optional.ofNullable(p.getViews()).orElse(0),
                         p.getCreatedAt()
                 ))
-                .collect(Collectors.toList());
+                .toList();
 
-        int page = 0;
-        int size = 10;
-        long totalElements = content.size();
-        int totalPages = (int) Math.ceil((double) totalElements / size);
-
-        return new PostListResponse(content, page, size, totalElements, totalPages);
+        return new PostListResponse(
+                content,
+                postPage.getNumber(),          // 현재 페이지 번호
+                postPage.getSize(),            // 페이지 크기
+                postPage.getTotalElements(),   // 전체 게시글 수
+                postPage.getTotalPages()       // 전체 페이지 수
+        );
     }
+
 
     @Override
     public List<CommentResponse> getComments(Long postId, Long requestUserId) {

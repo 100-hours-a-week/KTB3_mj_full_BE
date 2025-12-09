@@ -81,15 +81,21 @@ public class PostController {
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류")
     })
+
     @GetMapping
-    public ResponseEntity<ApiResponse<Object>> list() {
+    public ResponseEntity<ApiResponse<Object>> list(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
         try {
-            PostListResponse data = postService.getPosts();
+            // page, size를 서비스에 넘김
+            PostListResponse data = postService.getPosts(page, size);
             return ResponseEntity.ok(new ApiResponse<>("read_success", data));
         } catch (Exception e) {
             return internalError();
         }
     }
+
 
     @Operation(summary = "게시글 상세 조회", description = "게시글 ID를 기반으로 상세 내용을 조회합니다.")
     @io.swagger.v3.oas.annotations.responses.ApiResponses({

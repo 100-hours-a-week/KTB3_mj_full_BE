@@ -6,7 +6,8 @@ import com.example.restapi_demo.post.model.Post;
 import java.util.List;
 
 public interface PostService {
-    PostListResponse getPosts();
+    PostListResponse getPosts(int page, int size);
+
     PostDetailResponse getPostDetail(Long postId, Long requestUserId);
 
     boolean deletePost(Long postId, Long requesterId);

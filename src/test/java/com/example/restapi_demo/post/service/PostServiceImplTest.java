@@ -316,7 +316,7 @@ class PostServiceImplTest {
             when(jpaRepo.findAllWithAuthorAndImages()).thenReturn(List.of(post));
 
             // when
-            PostListResponse result = postService.getPosts();
+            PostListResponse result = postService.getPosts(0,10);
 
             // then
             assertThat(result).isNotNull();

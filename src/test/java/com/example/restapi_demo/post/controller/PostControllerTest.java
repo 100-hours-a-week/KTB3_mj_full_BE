@@ -65,7 +65,8 @@ class PostControllerTest {
                     1
             );
 
-            when(postService.getPosts()).thenReturn(response);
+            // 🔻 여기 수정
+            when(postService.getPosts(0, 10)).thenReturn(response);
 
             // When & Then
             mockMvc.perform(get("/api/posts"))
@@ -83,7 +84,8 @@ class PostControllerTest {
         @DisplayName("서버 오류")
         void serverError() throws Exception {
             // Given
-            when(postService.getPosts())
+            // 🔻 여기도 수정
+            when(postService.getPosts(0, 10))
                     .thenThrow(new RuntimeException("서버 오류"));
 
             // When & Then
@@ -93,6 +95,7 @@ class PostControllerTest {
                     .andExpect(jsonPath("$.message").value("internal_server_error"));
         }
     }
+
 
     @Nested
     @DisplayName("게시글 상세 조회")
