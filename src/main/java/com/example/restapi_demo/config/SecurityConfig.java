@@ -11,7 +11,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -50,7 +49,7 @@ public class SecurityConfig {
         return new ProviderManager(provider);
     }
 
-    // ★★★ CORS 설정 Bean 추가 ★★★
+    // CORS 설정 Bean
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
@@ -75,10 +74,10 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // ★★★ CORS 설정 Bean 사용 ★★★
+                // CORS 설정
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-                // CSRF 비활성화 (JWT는 헤더로 전송하므로 CSRF 공격 불가)
+                // CSRF 비활성화 (JWT 사용)
                 .csrf(csrf -> csrf.disable())
 
                 // 세션 사용 안 함 (STATELESS)
@@ -86,7 +85,7 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
 
-                // 폼 로그인, HTTP Basic 인증 비활성화
+                // 폼 로그인, HTTP Basic 비활성화
                 .formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable())
 
@@ -100,17 +99,22 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // ★★★ 회원가입 관련 API 모두 허용 ★★★
+                        // 회원가입 관련 API
                         .requestMatchers(HttpMethod.POST, "/api/users/signup").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/exists/email").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/count/nickname").permitAll()
+                        // ★ 닉네임 검색: 비로그인 허용
+                        .requestMatchers(HttpMethod.GET, "/api/users/search/nickname").permitAll()
 
-                        // 로그인
+                        // 로그인 / 로그아웃
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/logout").permitAll()
 
-                        // 게시글 조회
+                        // 게시글 조회: 비로그인 허용
                         .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
+                        // ★ 조회수 증가 API: 비로그인 허용
+                        .requestMatchers(HttpMethod.POST, "/api/posts/*/views").permitAll()
+                        // (필요하면 "/api/posts/**/views" 로 바꿔도 됩니다.)
 
                         // Swagger
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()

@@ -13,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.*;
 
 import java.util.*;
 
@@ -313,15 +314,23 @@ class PostServiceImplTest {
         void list() {
             // given
             Post post = createPost(1L, createUser(1L));
-            when(jpaRepo.findAllWithAuthorAndImages()).thenReturn(List.of(post));
+
+            Pageable pageable = PageRequest.of(
+                    0, 10, Sort.by(Sort.Direction.DESC, "createdAt")
+            );
+
+            Page<Post> page = new PageImpl<>(List.of(post), pageable, 1);
+
+            when(jpaRepo.findAll(any(Pageable.class))).thenReturn(page);
 
             // when
-            PostListResponse result = postService.getPosts(0,10);
+            PostListResponse result = postService.getPosts(0, 10);
 
             // then
             assertThat(result).isNotNull();
             assertThat(result.getContent()).hasSize(1);
-            verify(jpaRepo).findAllWithAuthorAndImages();
+
+            verify(jpaRepo).findAll(any(Pageable.class));
         }
 
         @Test
